@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE_TAG: ${{ secrets.DOCKER_USERNAME }}/telegram-bot-api
-      ALPINE_VERSION: 3.19
+      ALPINE_VERSION: '3.20'
     strategy:
       matrix:
         arch:

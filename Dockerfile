@@ -4,7 +4,7 @@ FROM alpine:${ALPINE_VERSION} as build
 ENV CXXFLAGS=""
 WORKDIR /usr/src/telegram-bot-api
 
-RUN apk add --no-cache --update alpine-sdk linux-headers git zlib-dev openssl-dev gperf cmake
+RUN apk add --no-cache --update alpine-sdk linux-headers git zlib-dev openssl-dev gperf cmake php
 COPY telegram-bot-api /usr/src/telegram-bot-api
 ARG nproc=1
 RUN mkdir -p build \
