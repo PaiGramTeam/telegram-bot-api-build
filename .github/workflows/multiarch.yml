@@ -1,28 +1,29 @@
 name: Docker multi-arch build and push
 
 on:
-  push:
-    branches:
-      - master
-  schedule:
-    - cron: '20 4 * * *'
+  # push:
+  #   branches:
+  #     - master
+  # schedule:
+  #   - cron: '20 4 * * *'
+  workflow_dispatch: ~
 
 jobs:
   build:
     name: Build Docker image (${{ matrix.arch }})
     runs-on: ubuntu-latest
     env:
-      IMAGE_TAG: ${{ secrets.DOCKERHUB_OWNER }}/telegram-bot-api
+      IMAGE_TAG: ${{ secrets.DOCKER_USERNAME }}/telegram-bot-api
       ALPINE_VERSION: '3.21'
     strategy:
       matrix:
         arch:
-          - linux/386
+          # - linux/386
           - linux/amd64
-          - linux/arm/v6
-          - linux/arm/v7
-          - linux/arm64
-          - linux/ppc64le
+          # - linux/arm/v6
+          # - linux/arm/v7
+          # - linux/arm64
+          # - linux/ppc64le
 
     steps:
       - name: Checkout current repo
@@ -31,7 +32,7 @@ jobs:
       - name: Checkout upstream repo
         uses: actions/checkout@v4
         with:
-          repository: tdlib/telegram-bot-api
+          repository: paigramteam/telegram-bot-api
           path: telegram-bot-api
           submodules: recursive
 
@@ -86,8 +87,8 @@ jobs:
         uses: docker/login-action@v3
         if: ${{ github.event_name != 'pull_request' }}
         with:
-          username: ${{ secrets.DOCKERHUB_LOGIN }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Set build parameters
         id: build-params
@@ -155,42 +156,20 @@ jobs:
       - name: Load environment info and built images
         run: |
           cat github_env/github.env > $GITHUB_ENV
-          docker load --input image_linux386/linux386.tar
           docker load --input image_linuxamd64/linuxamd64.tar
-          docker load --input image_linuxarmv6/linuxarmv6.tar
-          docker load --input image_linuxarmv7/linuxarmv7.tar
-          docker load --input image_linuxarm64/linuxarm64.tar
-          docker load --input image_linuxppc64le/linuxppc64le.tar
-
-      - name: Login to ghcr registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_LOGIN }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Create and push manifest
         run: |
           docker manifest create ${{ env.IMAGE_TAG }}:${{ env.VERSION }} \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linux386 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxamd64 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxarmv6 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxarmv7 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxarm64 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxppc64le
+            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxamd64
           docker manifest push ${{ env.IMAGE_TAG }}:${{ env.VERSION }}
 
           docker manifest create ${{ env.IMAGE_TAG }}:latest \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linux386 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxamd64 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxarmv6 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxarmv7 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxarm64 \
-            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxppc64le
+            --amend ${{ env.IMAGE_TAG }}:${{ env.VERSION }}-linuxamd64
           docker manifest push ${{ env.IMAGE_TAG }}:latest
